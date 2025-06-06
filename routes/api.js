@@ -1,43 +1,57 @@
+require('dotenv').config();
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const mysql = require('mysql2/promise');
 
 const router = express.Router();
 
-function readJson(file) {
-  return JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'api', file), 'utf-8'));
+// Configuración de conexión MySQL usando variables de entorno
+const pool = mysql.createPool({
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+  port: process.env.MYSQL_PORT,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
+
+// Helper para consultas
+async function queryTable(table) {
+  const [rows] = await pool.query(`SELECT * FROM \`${table}\``);
+  return rows;
 }
 
-router.get('/users', (req, res) => {
+router.get('/users', async (req, res) => {
   try {
-    const users = readJson('users.json');
+    const users = await queryTable('users');
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener usuarios' });
   }
 });
 
-router.get('/posts', (req, res) => {
+router.get('/posts', async (req, res) => {
   try {
-    const posts = readJson('posts.json');
+    const posts = await queryTable('posts');
     res.json(posts);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener posts' });
   }
 });
 
-router.get('/todos', (req, res) => {
+router.get('/todos', async (req, res) => {
   try {
-    const todos = readJson('todos.json');
+    const todos = await queryTable('todos');
     res.json(todos);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener todos' });
   }
 });
 
-router.get('/albums', (req, res) => {
+router.get('/albums', async (req, res) => {
   try {
-    const albums = readJson('albums.json');
+    const albums = await queryTable('albums');
     res.json(albums);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener álbumes' });
